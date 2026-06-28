@@ -164,3 +164,39 @@ SELECT FirstName || ' ' || LastName AS FullName,
        HireDate
 FROM Employees
 WHERE date(BirthDate, '+40 years') <= date(HireDate);
+
+-- ============================================
+-- 8. LEFT JOIN
+-- ============================================
+
+-- All customers and their orders
+SELECT c.ContactName, COUNT(*)
+FROM Customers c
+LEFT JOIN Orders o ON c.CustomerID = o.CustomerID
+GROUP BY c.ContactName;
+
+-- All categories and their products
+SELECT ca.CategoryName, COUNT(*)
+FROM Categories ca
+LEFT JOIN Products p ON ca.CategoryID = p.CategoryID
+GROUP BY ca.CategoryName;
+
+-- All employees and orders processed
+SELECT e.FirstName, e.LastName, COUNT(*)
+FROM Employees e
+LEFT JOIN Orders o ON e.EmployeeID = o.EmployeeID
+GROUP BY e.FirstName, e.LastName
+ORDER BY COUNT(*) DESC;
+
+-- All suppliers and their products
+SELECT s.CompanyName, COUNT(*)
+FROM Suppliers s
+LEFT JOIN Products p ON s.SupplierID = p.SupplierID
+GROUP BY s.CompanyName
+ORDER BY COUNT(*) DESC;
+
+-- Customers with NO orders
+SELECT c.ContactName
+FROM Customers c
+LEFT JOIN Orders o ON c.CustomerID = o.CustomerID
+WHERE o.OrderID IS NULL;
