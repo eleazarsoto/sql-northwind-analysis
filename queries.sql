@@ -244,3 +244,56 @@ END AS Performance
 FROM Employees e
 JOIN Orders o ON e.EmployeeID = o.EmployeeID
 GROUP BY e.FirstName, e.LastName;
+
+¡Vamos! Ve a sql-northwind-analysis → abre queries.sql → clic en ✏️ y agrega al final:
+sql-- ============================================
+-- 10. CASE — Additional exercises
+-- ============================================
+
+-- Customers by order volume
+SELECT c.ContactName,
+CASE
+    WHEN COUNT(*) > 15 THEN 'High'
+    WHEN COUNT(*) BETWEEN 8 AND 15 THEN 'Medium'
+    ELSE 'Low'
+END AS OrderVolume
+FROM Customers c
+JOIN Orders o ON c.CustomerID = o.CustomerID
+GROUP BY c.ContactName;
+
+-- Products by availability
+SELECT ProductName,
+CASE
+    WHEN Discontinued = 1 THEN 'Discontinued'
+    WHEN Discontinued = 0 THEN 'Available'
+END AS Availability
+FROM Products;
+
+-- Suppliers by size
+SELECT s.CompanyName,
+CASE
+    WHEN COUNT(*) > 4 THEN 'Large'
+    WHEN COUNT(*) BETWEEN 2 AND 4 THEN 'Medium'
+    ELSE 'Small'
+END AS Size
+FROM Products p
+JOIN Suppliers s ON p.SupplierID = s.SupplierID
+GROUP BY s.CompanyName;
+
+-- Employees by region
+SELECT FirstName, LastName, City,
+CASE
+    WHEN City IN ('Seattle', 'Tacoma', 'Kirkland', 'Redmond') THEN 'USA'
+    WHEN City = 'London' THEN 'UK'
+    ELSE 'Other'
+END AS Region
+FROM Employees;
+
+-- Products by discount
+SELECT ProductName, UnitPrice,
+CASE
+    WHEN UnitPrice > 100 THEN '20% off'
+    WHEN UnitPrice BETWEEN 50 AND 100 THEN '10% off'
+    ELSE 'No discount'
+END AS Discount
+FROM Products;
