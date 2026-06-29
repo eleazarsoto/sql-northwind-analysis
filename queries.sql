@@ -200,3 +200,47 @@ SELECT c.ContactName
 FROM Customers c
 LEFT JOIN Orders o ON c.CustomerID = o.CustomerID
 WHERE o.OrderID IS NULL;
+
+-- ============================================
+-- 9. CASE
+-- ============================================
+
+-- Products by price range
+SELECT ProductName, UnitPrice,
+CASE
+    WHEN UnitPrice < 10 THEN 'Cheap'
+    WHEN UnitPrice BETWEEN 10 AND 50 THEN 'Medium'
+    WHEN UnitPrice > 50 THEN 'Expensive'
+END AS PriceRange
+FROM Products;
+
+-- Customers classified by total orders
+SELECT c.ContactName,
+CASE
+    WHEN COUNT(*) > 20 THEN 'VIP'
+    WHEN COUNT(*) BETWEEN 5 AND 10 THEN 'Regular'
+    ELSE 'New'
+END AS CustomerType
+FROM Customers c
+JOIN Orders o ON c.CustomerID = o.CustomerID
+GROUP BY c.ContactName;
+
+-- Products by stock status
+SELECT ProductName, UnitsInStock,
+CASE
+    WHEN UnitsInStock = 0 THEN 'Out of stock'
+    WHEN UnitsInStock BETWEEN 1 AND 10 THEN 'Low stock'
+    ELSE 'In stock'
+END AS StockStatus
+FROM Products;
+
+-- Employees classified by performance
+SELECT e.FirstName, e.LastName,
+CASE
+    WHEN COUNT(*) > 100 THEN 'Top Performer'
+    WHEN COUNT(*) BETWEEN 50 AND 100 THEN 'Good'
+    ELSE 'Average'
+END AS Performance
+FROM Employees e
+JOIN Orders o ON e.EmployeeID = o.EmployeeID
+GROUP BY e.FirstName, e.LastName;
