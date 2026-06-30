@@ -19,6 +19,7 @@ Covering sales, customers, employees, products and suppliers.
 - INNER JOIN (2 and 3 tables)
 - LIKE, IN, BETWEEN
 - Aliases and subqueries
+- UNION — combining results from multiple queries
 
 ## 🔍 Key Queries
 
