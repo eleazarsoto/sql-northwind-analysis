@@ -327,3 +327,19 @@ HAVING COUNT(*) = (
         GROUP BY CustomerID
     )
 );
+
+-- ============================================
+-- 12. UNION
+-- ============================================
+
+-- Combined list of customer and employee cities (no duplicates)
+SELECT City FROM Customers
+UNION
+SELECT City FROM Employees;
+
+-- Combined contacts labeled by type
+SELECT ContactName, 'Customer' AS Type
+FROM Customers
+UNION
+SELECT ContactName, 'Supplier' AS Type
+FROM Suppliers;
