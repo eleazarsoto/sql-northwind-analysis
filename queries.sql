@@ -297,3 +297,33 @@ CASE
     ELSE 'No discount'
 END AS Discount
 FROM Products;
+
+-- ============================================
+-- 11. SUBQUERIES
+-- ============================================
+
+-- Products priced above the average
+SELECT ProductName, UnitPrice
+FROM Products
+WHERE UnitPrice > (SELECT AVG(UnitPrice) FROM Products);
+
+-- Products from suppliers in USA
+SELECT ProductName
+FROM Products
+WHERE SupplierID IN (
+    SELECT SupplierID FROM Suppliers WHERE Country = 'USA'
+);
+
+-- Customer with the most orders (nested subquery)
+SELECT c.ContactName, COUNT(*) AS TotalOrders
+FROM Customers c
+JOIN Orders o ON c.CustomerID = o.CustomerID
+GROUP BY c.ContactName
+HAVING COUNT(*) = (
+    SELECT MAX(OrderCount)
+    FROM (
+        SELECT COUNT(*) AS OrderCount
+        FROM Orders
+        GROUP BY CustomerID
+    )
+);
