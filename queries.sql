@@ -1,345 +1,427 @@
--- ============================================
+-- ============================================================
 -- NORTHWIND DATABASE ANALYSIS
 -- Eleazar Soto | Data Analytics Portfolio
--- ============================================
+-- github.com/eleazarsoto
+-- ============================================================
+-- Database: Northwind (SQLite)
+-- Tables: Customers, Orders, Products, Categories, Suppliers,
+--         Employees, Shippers, Order Details
+-- Records: 830 orders | 93 customers | 77 products | 9 employees
+-- ============================================================
 
--- ============================================
--- 1. SELECT + FROM
--- ============================================
 
--- Categories and descriptions
+-- ============================================================
+-- LEVEL 1 — SELECT + FROM + WHERE + IS NULL
+-- ============================================================
+
+-- 01.
+-- Show a table with all categories and their descriptions [8 rows].
 SELECT CategoryName, Description
 FROM Categories;
 
--- Products with price
-SELECT ProductName, UnitPrice
-FROM Products;
 
--- Employees full info
-SELECT FirstName, LastName, Title, City
-FROM Employees;
-
--- ============================================
--- 2. WHERE
--- ============================================
-
--- Customers from London
+-- 02.
+-- Show contact names, customer IDs, and company names for all customers from London [6 rows].
 SELECT ContactName, CustomerID, CompanyName
 FROM Customers
 WHERE City = 'London';
 
--- Products over $20
-SELECT ProductName, UnitPrice
-FROM Products
-WHERE UnitPrice > 20;
 
--- Owners from Mexico, Norway and Germany
+-- 03.
+-- Show all available columns for suppliers that have a FAX number [13 rows].
+SELECT *
+FROM Suppliers
+WHERE Fax IS NOT NULL;
+
+
+-- 04.
+-- Count the total number of orders placed in 1997 [Result: 408].
+SELECT COUNT(*) AS Total_Orders_1997
+FROM Orders
+WHERE OrderDate LIKE '1997%';
+
+
+-- 05.
+-- Show all contacts who are business owners from Mexico, Norway and Germany [5 rows].
 SELECT ContactName, ContactTitle, Country
 FROM Customers
 WHERE ContactTitle = 'Owner'
 AND Country IN ('Mexico', 'Norway', 'Germany');
 
--- ============================================
--- 3. IS NULL / IS NOT NULL
--- ============================================
 
--- Suppliers with FAX
-SELECT *
-FROM Suppliers
-WHERE Fax IS NOT NULL;
-
--- Customers without region
-SELECT CompanyName, Region
-FROM Customers
-WHERE Region IS NULL;
-
--- ============================================
--- 4. COUNT
--- ============================================
-
--- Total orders in 1997
-SELECT COUNT(*) AS Total_Orders_1997
-FROM Orders
-WHERE OrderDate LIKE '1997%';
-
--- Customers by country
-SELECT Country, COUNT(*) AS Total
-FROM Customers
-GROUP BY Country
-ORDER BY COUNT(*) DESC;
-
--- ============================================
--- 5. ORDER BY
--- ============================================
-
--- Most expensive products
-SELECT ProductName, UnitPrice
+-- 06.
+-- Show the list of discontinued products [8 rows].
+SELECT ProductName, UnitPrice, Discontinued
 FROM Products
-ORDER BY UnitPrice DESC;
+WHERE Discontinued = '1';
 
--- Employees alphabetically
-SELECT FirstName, LastName
-FROM Employees
-ORDER BY LastName ASC;
 
--- ============================================
--- 6. GROUP BY + HAVING
--- ============================================
+-- 07.
+-- Show categories that start with 'Co' [2 rows].
+SELECT CategoryName
+FROM Categories
+WHERE CategoryName LIKE 'Co%';
 
--- Top 10 orders by total units
+
+-- 08.
+-- Show company names, cities, countries and postal codes of suppliers
+-- whose address contains the word 'rue', ordered alphabetically by company name [5 rows].
+SELECT CompanyName, City, Country, PostalCode
+FROM Suppliers
+WHERE Address LIKE '%rue%'
+ORDER BY CompanyName ASC;
+
+
+-- 09.
+-- Show the top 10 order IDs along with their total units sold [10 rows].
 SELECT OrderID, SUM(Quantity) AS Total_Units
 FROM 'Order Details'
 GROUP BY OrderID
 ORDER BY SUM(Quantity) DESC
 LIMIT 10;
 
--- Categories with more than 10 products
-SELECT CategoryID, COUNT(*) AS Total
-FROM Products
-GROUP BY CategoryID
-HAVING COUNT(*) > 10
-ORDER BY COUNT(*) DESC;
 
--- Price stats by category
-SELECT CategoryID,
-       MAX(UnitPrice) AS Max_Price,
-       MIN(UnitPrice) AS Min_Price,
-       AVG(UnitPrice) AS Avg_Price
-FROM Products
-GROUP BY CategoryID
-ORDER BY AVG(UnitPrice) DESC;
-
--- ============================================
--- 7. JOIN
--- ============================================
-
--- Products with category name
-SELECT p.ProductName, c.CategoryName
-FROM Products p
-JOIN Categories c ON p.CategoryID = c.CategoryID;
-
--- Products from Condiments category
+-- 10.
+-- Show the list of products within the 'Condiments' category [12 rows].
 SELECT p.ProductName, c.CategoryName
 FROM Products p
 JOIN Categories c ON p.CategoryID = c.CategoryID
 WHERE c.CategoryName = 'Condiments';
 
--- Customers and their orders
-SELECT c.ContactName, o.OrderDate
-FROM Customers c
-JOIN Orders o ON c.CustomerID = o.CustomerID;
 
--- Orders shipped by Speedy Express
-SELECT c.ContactName, c.Address
-FROM Customers c
-JOIN Orders o ON c.CustomerID = o.CustomerID
-JOIN Shippers s ON o.ShipVia = s.ShipperID
-WHERE s.CompanyName = 'Speedy Express';
+-- ============================================================
+-- LEVEL 2 — JOINS + LEFT JOIN + DATE FUNCTIONS
+-- ============================================================
 
--- Employees and total orders processed
-SELECT e.FirstName, e.LastName, COUNT(*) AS Total_Orders
-FROM Employees e
-JOIN Orders o ON e.EmployeeID = o.EmployeeID
-GROUP BY e.FirstName, e.LastName
-ORDER BY COUNT(*) DESC;
-
--- Customers with more than 10 orders
-SELECT c.ContactName, COUNT(*) AS Total_Orders
-FROM Customers c
-JOIN Orders o ON c.CustomerID = o.CustomerID
-GROUP BY c.ContactName
-HAVING COUNT(*) > 10
-ORDER BY COUNT(*) DESC;
-
--- Products with category, supplier and price over $50
-SELECT p.ProductName, ca.CategoryName, s.CompanyName, p.UnitPrice
-FROM Products p
-JOIN Categories ca ON p.CategoryID = ca.CategoryID
-JOIN Suppliers s ON p.SupplierID = s.SupplierID
-WHERE p.UnitPrice > 50;
-
--- Employees hired at 40+ years old
+-- 11.
+-- Show all employees who were 40 years old or older at the time of hiring [3 rows].
 SELECT FirstName || ' ' || LastName AS FullName,
        BirthDate,
        HireDate
 FROM Employees
 WHERE date(BirthDate, '+40 years') <= date(HireDate);
 
--- ============================================
--- 8. LEFT JOIN
--- ============================================
 
--- All customers and their orders
-SELECT c.ContactName, COUNT(*)
+-- 12.
+-- Show products with total units in stock greater than 100.
+-- Name the total field 'TotalUnits' [10 rows].
+SELECT ProductName, UnitsInStock AS TotalUnits
+FROM Products
+WHERE UnitsInStock > 100;
+
+
+-- 13.
+-- Show contact names and addresses of customers whose orders were shipped via 'Speedy Express' [249 rows].
+SELECT c.ContactName, c.Address
 FROM Customers c
-LEFT JOIN Orders o ON c.CustomerID = o.CustomerID
-GROUP BY c.ContactName;
+JOIN Orders o ON c.CustomerID = o.CustomerID
+JOIN Shippers sh ON o.ShipVia = sh.ShipperID
+WHERE sh.CompanyName = 'Speedy Express';
 
--- All categories and their products
-SELECT ca.CategoryName, COUNT(*)
-FROM Categories ca
-LEFT JOIN Products p ON ca.CategoryID = p.CategoryID
-GROUP BY ca.CategoryName;
 
--- All employees and orders processed
-SELECT e.FirstName, e.LastName, COUNT(*)
-FROM Employees e
-LEFT JOIN Orders o ON e.EmployeeID = o.EmployeeID
-GROUP BY e.FirstName, e.LastName
-ORDER BY COUNT(*) DESC;
-
--- All suppliers and their products
-SELECT s.CompanyName, COUNT(*)
-FROM Suppliers s
-LEFT JOIN Products p ON s.SupplierID = p.SupplierID
-GROUP BY s.CompanyName
-ORDER BY COUNT(*) DESC;
-
--- Customers with NO orders
+-- 14.
+-- Show the list of customers who have never placed an order [4 rows].
 SELECT c.ContactName
 FROM Customers c
 LEFT JOIN Orders o ON c.CustomerID = o.CustomerID
 WHERE o.OrderID IS NULL;
 
--- ============================================
--- 9. CASE
--- ============================================
 
--- Products by price range
-SELECT ProductName, UnitPrice,
-CASE
-    WHEN UnitPrice < 10 THEN 'Cheap'
-    WHEN UnitPrice BETWEEN 10 AND 50 THEN 'Medium'
-    WHEN UnitPrice > 50 THEN 'Expensive'
-END AS PriceRange
-FROM Products;
-
--- Customers classified by total orders
-SELECT c.ContactName,
-CASE
-    WHEN COUNT(*) > 20 THEN 'VIP'
-    WHEN COUNT(*) BETWEEN 5 AND 10 THEN 'Regular'
-    ELSE 'New'
-END AS CustomerType
-FROM Customers c
-JOIN Orders o ON c.CustomerID = o.CustomerID
-GROUP BY c.ContactName;
-
--- Products by stock status
-SELECT ProductName, UnitsInStock,
-CASE
-    WHEN UnitsInStock = 0 THEN 'Out of stock'
-    WHEN UnitsInStock BETWEEN 1 AND 10 THEN 'Low stock'
-    ELSE 'In stock'
-END AS StockStatus
-FROM Products;
-
--- Employees classified by performance
-SELECT e.FirstName, e.LastName,
-CASE
-    WHEN COUNT(*) > 100 THEN 'Top Performer'
-    WHEN COUNT(*) BETWEEN 50 AND 100 THEN 'Good'
-    ELSE 'Average'
-END AS Performance
+-- 15.
+-- Show employees and customers involved in orders shipped to Brussels via 'Speedy Express' [2 rows].
+SELECT DISTINCT e.FirstName, e.LastName, c.ContactName
 FROM Employees e
 JOIN Orders o ON e.EmployeeID = o.EmployeeID
-GROUP BY e.FirstName, e.LastName;
+JOIN Customers c ON o.CustomerID = c.CustomerID
+JOIN Shippers sh ON o.ShipVia = sh.ShipperID
+WHERE o.ShipCity = 'Bruxelles'
+AND sh.CompanyName = 'Speedy Express';
 
-¡Vamos! Ve a sql-northwind-analysis → abre queries.sql → clic en ✏️ y agrega al final:
-sql-- ============================================
--- 10. CASE — Additional exercises
--- ============================================
 
--- Customers by order volume
-SELECT c.ContactName,
-CASE
-    WHEN COUNT(*) > 15 THEN 'High'
-    WHEN COUNT(*) BETWEEN 8 AND 15 THEN 'Medium'
-    ELSE 'Low'
-END AS OrderVolume
+-- 16.
+-- Show the job title and full name of employees who sold at least one unit of 'Queso Cabrales' or 'Tofu' [9 rows].
+SELECT DISTINCT e.Title, e.FirstName || ' ' || e.LastName AS FullName
+FROM Employees e
+JOIN Orders o ON e.EmployeeID = o.EmployeeID
+JOIN 'Order Details' od ON o.OrderID = od.OrderID
+JOIN Products p ON od.ProductID = p.ProductID
+WHERE p.ProductName IN ('Queso Cabrales', 'Tofu');
+
+
+-- 17.
+-- Show employees' full names and their manager's last name.
+-- Include employees with no manager (NULL values) [9 rows].
+SELECT e.FirstName || ' ' || e.LastName AS FullName,
+       m.LastName AS ManagerLastName
+FROM Employees e
+LEFT JOIN Employees m ON e.ReportsTo = m.EmployeeID;
+
+
+-- 18.
+-- Show distinct contact names, product names and supplier company names
+-- for customers from London who bought products from 'Karkki Oy' or 'Pavlova, Ltd.' [9 rows].
+SELECT DISTINCT c.ContactName, p.ProductName, s.CompanyName
 FROM Customers c
 JOIN Orders o ON c.CustomerID = o.CustomerID
-GROUP BY c.ContactName;
-
--- Products by availability
-SELECT ProductName,
-CASE
-    WHEN Discontinued = 1 THEN 'Discontinued'
-    WHEN Discontinued = 0 THEN 'Available'
-END AS Availability
-FROM Products;
-
--- Suppliers by size
-SELECT s.CompanyName,
-CASE
-    WHEN COUNT(*) > 4 THEN 'Large'
-    WHEN COUNT(*) BETWEEN 2 AND 4 THEN 'Medium'
-    ELSE 'Small'
-END AS Size
-FROM Products p
+JOIN 'Order Details' od ON o.OrderID = od.OrderID
+JOIN Products p ON od.ProductID = p.ProductID
 JOIN Suppliers s ON p.SupplierID = s.SupplierID
-GROUP BY s.CompanyName;
+WHERE c.City = 'London'
+AND s.CompanyName IN ('Karkki Oy', 'Pavlova, Ltd.');
 
--- Employees by region
-SELECT FirstName, LastName, City,
-CASE
-    WHEN City IN ('Seattle', 'Tacoma', 'Kirkland', 'Redmond') THEN 'USA'
-    WHEN City = 'London' THEN 'UK'
-    ELSE 'Other'
-END AS Region
-FROM Employees;
 
--- Products by discount
-SELECT ProductName, UnitPrice,
-CASE
-    WHEN UnitPrice > 100 THEN '20% off'
-    WHEN UnitPrice BETWEEN 50 AND 100 THEN '10% off'
-    ELSE 'No discount'
-END AS Discount
-FROM Products;
+-- 19.
+-- Show distinct product names from orders where the customer or employee involved is from London [76 rows].
+SELECT DISTINCT p.ProductName
+FROM Products p
+JOIN 'Order Details' od ON p.ProductID = od.ProductID
+JOIN Orders o ON od.OrderID = o.OrderID
+JOIN Customers c ON o.CustomerID = c.CustomerID
+JOIN Employees e ON o.EmployeeID = e.EmployeeID
+WHERE c.City = 'London' OR e.City = 'London';
 
--- ============================================
--- 11. SUBQUERIES
--- ============================================
 
--- Products priced above the average
-SELECT ProductName, UnitPrice
-FROM Products
-WHERE UnitPrice > (SELECT AVG(UnitPrice) FROM Products);
-
--- Products from suppliers in USA
-SELECT ProductName
-FROM Products
-WHERE SupplierID IN (
-    SELECT SupplierID FROM Suppliers WHERE Country = 'USA'
-);
-
--- Customer with the most orders (nested subquery)
-SELECT c.ContactName, COUNT(*) AS TotalOrders
+-- 20.
+-- Show all customers who have purchased products with a unit price below 3 [26 rows].
+SELECT DISTINCT c.ContactName
 FROM Customers c
 JOIN Orders o ON c.CustomerID = o.CustomerID
-GROUP BY c.ContactName
-HAVING COUNT(*) = (
-    SELECT MAX(OrderCount)
-    FROM (
-        SELECT COUNT(*) AS OrderCount
-        FROM Orders
-        GROUP BY CustomerID
-    )
+JOIN 'Order Details' od ON o.OrderID = od.OrderID
+JOIN Products p ON od.ProductID = p.ProductID
+WHERE p.UnitPrice < 3;
+
+
+-- ============================================================
+-- LEVEL 3 — SUBQUERIES + SELF JOIN + ADVANCED FILTERS
+-- ============================================================
+
+-- 21.
+-- Show full names of employees who have worked longer than any employee based in London [4 rows].
+SELECT FirstName || ' ' || LastName AS FullName
+FROM Employees
+WHERE date(HireDate) < (
+    SELECT MIN(date(HireDate))
+    FROM Employees
+    WHERE City = 'London'
 );
 
--- ============================================
--- 12. UNION
--- ============================================
 
--- Combined list of customer and employee cities (no duplicates)
-SELECT City FROM Customers
-UNION
-SELECT City FROM Employees;
+-- 22.
+-- Show full names and city of employees who have sold to customers in the same city [6 rows].
+SELECT DISTINCT e.FirstName || ' ' || e.LastName AS FullName, e.City
+FROM Employees e
+JOIN Orders o ON e.EmployeeID = o.EmployeeID
+JOIN Customers c ON o.CustomerID = c.CustomerID
+WHERE e.City = c.City;
 
--- Combined contacts labeled by type
-SELECT ContactName, 'Customer' AS Type
-FROM Customers
-UNION
-SELECT ContactName, 'Supplier' AS Type
-FROM Suppliers;
+
+-- 23.
+-- Show the average unit price per product category [8 rows].
+SELECT c.CategoryName, AVG(p.UnitPrice) AS AvgPrice
+FROM Products p
+JOIN Categories c ON p.CategoryID = c.CategoryID
+GROUP BY c.CategoryName;
+
+
+-- 24.
+-- Show supplier company names that provide more than 4 products [2 rows].
+SELECT s.CompanyName, COUNT(*) AS TotalProductos
+FROM Suppliers s
+JOIN Products p ON s.SupplierID = p.SupplierID
+GROUP BY s.CompanyName
+HAVING COUNT(*) > 4;
+
+
+-- 25.
+-- Presentar una lista de los IDs de empleados, sus nombres completos, y la cantidad
+-- de productos distintos que han vendido. Ordenada de forma ascendente por ID [9 líneas de datos].
+SELECT e.EmployeeID,
+       e.FirstName || ' ' || e.LastName AS FullName,
+       COUNT(DISTINCT od.ProductID) AS TotalProducts
+FROM Employees e
+JOIN Orders o ON e.EmployeeID = o.EmployeeID
+JOIN 'Order Details' od ON o.OrderID = od.OrderID
+GROUP BY e.EmployeeID
+ORDER BY e.EmployeeID ASC;
+
+
+-- 26.
+-- Presentar una lista de los IDs de empleados, sus nombres completos, y la suma total
+-- de facturación que ha logrado cada uno. Ordenada de forma ascendente por ID [9 líneas de datos].
+SELECT e.EmployeeID,
+       e.FirstName || ' ' || e.LastName AS FullName,
+       SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)) AS TotalSales
+FROM Employees e
+JOIN Orders o ON e.EmployeeID = o.EmployeeID
+JOIN 'Order Details' od ON o.OrderID = od.OrderID
+GROUP BY e.EmployeeID
+ORDER BY e.EmployeeID ASC;
+
+
+-- ============================================================
+-- LEVEL 4 — RANKING + TOP N + BUSINESS ANALYSIS
+-- ============================================================
+
+-- 27.
+-- Show the top 5 shipping cities by total revenue [5 rows].
+SELECT o.ShipCity,
+       SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)) AS TotalSales
+FROM Orders o
+JOIN 'Order Details' od ON o.OrderID = od.OrderID
+GROUP BY o.ShipCity
+ORDER BY TotalSales DESC
+LIMIT 5;
+
+
+-- 28.
+-- Show the top 5 products by total units sold [5 rows].
+SELECT p.ProductName, SUM(od.Quantity) AS TotalUnits
+FROM Products p
+JOIN 'Order Details' od ON p.ProductID = od.ProductID
+GROUP BY p.ProductName
+ORDER BY TotalUnits DESC
+LIMIT 5;
+
+
+-- 29.
+-- Show distinct customers who have purchased products in the 'Beverages' category [83 rows].
+SELECT DISTINCT c.ContactName
+FROM Customers c
+JOIN Orders o ON c.CustomerID = o.CustomerID
+JOIN 'Order Details' od ON o.OrderID = od.OrderID
+JOIN Products p ON od.ProductID = p.ProductID
+JOIN Categories ca ON p.CategoryID = ca.CategoryID
+WHERE ca.CategoryName = 'Beverages';
+
+
+-- 30.
+-- Show a ranking of suppliers by number of distinct products sold [29 rows].
+SELECT s.CompanyName, COUNT(DISTINCT od.ProductID) AS TotalProductos
+FROM Suppliers s
+JOIN Products p ON s.SupplierID = p.SupplierID
+JOIN 'Order Details' od ON p.ProductID = od.ProductID
+GROUP BY s.CompanyName
+ORDER BY TotalProductos DESC;
+
+
+-- ============================================================
+-- LEVEL 5 — DATE ANALYSIS + BUSINESS QUESTIONS
+-- ============================================================
+
+-- 31.
+-- How many orders were placed in June 1997?
+SELECT COUNT(*) AS TotalOrdenes
+FROM Orders
+WHERE strftime('%Y-%m', OrderDate) = '1997-06';
+
+
+-- 32.
+-- Which day had the highest number of orders in 1998?
+SELECT OrderDate, COUNT(*) AS TotalOrdenes
+FROM Orders
+WHERE strftime('%Y', OrderDate) = '1998'
+GROUP BY OrderDate
+ORDER BY TotalOrdenes DESC
+LIMIT 1;
+
+
+-- 33.
+-- Which employee generated the highest total revenue?
+SELECT e.EmployeeID,
+       e.FirstName || ' ' || e.LastName AS FullName,
+       SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)) AS TotalVentas
+FROM Employees e
+JOIN Orders o ON e.EmployeeID = o.EmployeeID
+JOIN 'Order Details' od ON o.OrderID = od.OrderID
+GROUP BY e.EmployeeID
+ORDER BY TotalVentas DESC
+LIMIT 1;
+
+
+-- 34.
+-- ¿Cuál fue el país de envío con el que se recaudó más dinero en concepto de Flete?
+SELECT ShipCountry, SUM(Freight) AS TotalFlete
+FROM Orders
+GROUP BY ShipCountry
+ORDER BY TotalFlete DESC
+LIMIT 1;
+
+
+-- ============================================================
+-- LEVEL 6 — TIME SERIES + CASE + VISUALIZATIONS
+-- ============================================================
+
+-- 35.
+-- Calculate total sales by year.
+-- Present in tabular format and column chart.
+SELECT strftime('%Y', o.OrderDate) AS Year,
+       SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)) AS TotalSales
+FROM Orders o
+JOIN 'Order Details' od ON o.OrderID = od.OrderID
+GROUP BY Year
+ORDER BY Year ASC;
+
+
+-- 36.
+-- Calculate total sales by month for 1997.
+-- Present in tabular format and line chart.
+SELECT strftime('%m', o.OrderDate) AS Month,
+       SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)) AS TotalSales
+FROM Orders o
+JOIN 'Order Details' od ON o.OrderID = od.OrderID
+WHERE strftime('%Y', o.OrderDate) = '1997'
+GROUP BY Month
+ORDER BY Month ASC;
+
+
+-- 37.
+-- Calculate total sales by year for the 'Condiments' category.
+-- Present in tabular format and bar chart.
+SELECT strftime('%Y', o.OrderDate) AS Year,
+       SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)) AS TotalSales
+FROM Orders o
+JOIN 'Order Details' od ON o.OrderID = od.OrderID
+JOIN Products p ON od.ProductID = p.ProductID
+JOIN Categories ca ON p.CategoryID = ca.CategoryID
+WHERE ca.CategoryName = 'Condiments'
+GROUP BY Year
+ORDER BY Year ASC;
+
+
+-- 38.
+-- Mostrar cuántos pedidos fueron enviados por Speedy Express,
+-- United Package y Federal Shipping.
+-- Presentarlo en formato tabular y gráfico circular.
+SELECT sh.CompanyName, COUNT(*) AS TotalPedidos
+FROM Shippers sh
+JOIN Orders o ON sh.ShipperID = o.ShipVia
+GROUP BY sh.CompanyName
+ORDER BY TotalPedidos DESC;
+
+
+-- 39.
+-- Mostrar la facturación mensual del año 1997, comparando las categorías
+-- 'Beverages' y 'Confections'. Cada fila debe representar un mes,
+-- y cada columna una categoría.
+-- Presentarlo en formato tabular y gráfico de líneas.
+SELECT strftime('%m', o.OrderDate) AS Month,
+       SUM(CASE WHEN ca.CategoryName = 'Beverages'
+           THEN od.UnitPrice * od.Quantity * (1 - od.Discount)
+           ELSE 0 END) AS Beverages,
+       SUM(CASE WHEN ca.CategoryName = 'Confections'
+           THEN od.UnitPrice * od.Quantity * (1 - od.Discount)
+           ELSE 0 END) AS Confections
+FROM Orders o
+JOIN 'Order Details' od ON o.OrderID = od.OrderID
+JOIN Products p ON od.ProductID = p.ProductID
+JOIN Categories ca ON p.CategoryID = ca.CategoryID
+WHERE strftime('%Y', o.OrderDate) = '1997'
+AND ca.CategoryName IN ('Beverages', 'Confections')
+GROUP BY Month
+ORDER BY Month ASC;
+
+
+-- ============================================================
+-- END OF NORTHWIND ANALYSIS
+-- Eleazar Soto | github.com/eleazarsoto
+-- ============================================================
